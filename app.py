@@ -93,36 +93,70 @@ age = st.slider("Age", 20, 65, 30)
 if "history" not in st.session_state:
     st.session_state.history = []
 
-# Predict Button
+    # ✅ Predict & Clear Buttons – Centered, Styled Separately
 with st.container():
-    col = st.columns([1, 1, 1])
-    with col[1]:
-        if st.button("🔮 Predict Salary"):
-            with st.spinner("Calculating salary... Please wait"):
-                input_df = pd.DataFrame([{
-                    "Experience": experience,
-                    "Age": age,
-                    "Education": education,
-                    "Job_Title": job,
-                    "Industry": industry,
-                    "City": city
-                }])
-                input_encoded = pd.get_dummies(input_df)
-                input_encoded = input_encoded.reindex(columns=model.feature_names_in_, fill_value=0)
-                salary = model.predict(input_encoded)[0]
+    col = st.columns(3)
+    with col[1]:  # Center column
+        # Blue Predict Button
+        predict_clicked = st.button("🔮 Predict Salary", key="predict_btn")
+        # Red Clear Button
+        clear_clicked = st.button("🗑️ Clear History", key="clear_btn")
 
-                st.toast(f"💰 Estimated Salary: ₹{int(salary):,}", icon="✅")
+        # Inject CSS for custom colors
+        st.markdown("""
+        <style>
+        div[data-testid="stButton"][data-baseweb="button"] > button[kind="primary"][data-testid="baseButton-element"][key="predict_btn"] {
+            background-color: #60a5fa;
+            color: black;
+            font-weight: bold;
+            width: 250px;
+            height: 45px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        div[data-testid="stButton"][data-baseweb="button"] > button[kind="primary"][data-testid="baseButton-element"][key="clear_btn"] {
+            background-color: #ef4444;
+            color: white;
+            font-weight: bold;
+            width: 250px;
+            height: 45px;
+            border-radius: 8px;
+        }
+        </style>
+        """, unsafe_allow_html=True)
 
-                result = input_df.copy()
-                result["Predicted_Salary"] = int(salary)
-                if "history" not in st.session_state:
-                    st.session_state.history = []
-                st.session_state.history.append(result)
+# 🔮 Predict Logic
+if predict_clicked:
+    with st.spinner("Calculating salary... Please wait"):
+        input_df = pd.DataFrame([{
+            "Experience": experience,
+            "Age": age,
+            "Education": education,
+            "Job_Title": job,
+            "Industry": industry,
+            "City": city
+        }])
+        input_encoded = pd.get_dummies(input_df)
+        input_encoded = input_encoded.reindex(columns=model.feature_names_in_, fill_value=0)
+        salary = model.predict(input_encoded)[0]
+
+        st.toast(f"💰 Estimated Salary: ₹{int(salary):,}", icon="✅")
+
+        result = input_df.copy()
+        result["Predicted_Salary"] = int(salary)
+        if "history" not in st.session_state:
+            st.session_state.history = []
+        st.session_state.history.append(result)
+
+# 🧹 Clear Logic
+if clear_clicked:
+    st.session_state.history = []
+    st.success("Prediction history cleared!")
 
 # Chart
 if st.session_state.history:
     st.markdown("### 📊 Predicted Salary vs Average by Role")
-    history_df = pd.concat(st.session_state.history, ignore_index=True)
+    history_df = st.session_state.history[-1].copy()
 
     avg_salaries = {
         "Data Scientist": 850000,
@@ -133,28 +167,45 @@ if st.session_state.history:
 
     history_df["Avg_Salary"] = history_df["Job_Title"].map(avg_salaries)
 
-    bar_chart = px.bar(
-        history_df,
-        x="Job_Title",
-        y="Predicted_Salary",
-        color="Job_Title",
-        animation_frame="Experience",
-        labels={"Predicted_Salary": "Predicted Salary", "Job_Title": "Job"},
-        title="Animated Bar Chart: Predicted Salary by Job Title",
-        width=600,
-        height=350
+    # Prepare data for grouped bar chart
+    chart_df = history_df[["Job_Title", "Predicted_Salary", "Avg_Salary"]].copy()
+    chart_df = chart_df.melt(
+        id_vars="Job_Title",
+        value_vars=["Predicted_Salary", "Avg_Salary"],
+        var_name="Salary_Type",
+        value_name="Salary"
     )
+
+    bar_chart = px.bar(
+        chart_df,
+        x="Job_Title",
+        y="Salary",
+        color="Salary_Type",
+        barmode="group",
+        text_auto=".2s",
+        labels={"Job_Title": "Job", "Salary": "Salary", "Salary_Type": "Type"},
+        title="Predicted vs Average Salary by Job Title",
+        color_discrete_map={"Predicted_Salary": "#38bdf8", "Avg_Salary": "#f97316"},
+        width=700,
+        height=400
+    )
+
     st.plotly_chart(bar_chart)
 
+    # Build line chart using full history
+    full_history_df = pd.concat(st.session_state.history, ignore_index=True)
+    full_history_df["Avg_Salary"] = full_history_df["Job_Title"].map(avg_salaries)
+
     line_chart = px.line(
-        history_df,
+        full_history_df,
         x="Experience",
         y=["Predicted_Salary", "Avg_Salary"],
-        color_discrete_map={"Predicted_Salary": "#38bdf8", "Avg_Salary": "orange"},
         markers=True,
-        title="Experience vs Salary Comparison",
-        width=600,
-        height=350
+        title="Experience vs Salary Comparison (Full History)",
+        labels={"value": "Salary", "Experience": "Years of Experience", "variable": "Type"},
+        color_discrete_map={"Predicted_Salary": "#38bdf8", "Avg_Salary": "#f97316"},
+        width=700,
+        height=400
     )
     st.plotly_chart(line_chart)
 
@@ -176,10 +227,14 @@ if st.session_state.history:
             text = f"{i+1}. {row['Job_Title']} | Exp: {row['Experience']} | Age: {row['Age']} | City: {row['City']} | Predicted Salary: Rs. {row['Predicted_Salary']:,}"
             pdf.multi_cell(0, 8, text)
             pdf.ln(1)
-        return pdf.output(dest='S').encode('latin-1')
+        return pdf.output(dest='S')
 
-    csv = convert_df_to_csv(history_df)
-    pdf = convert_df_to_pdf(history_df)
+    full_history_df = pd.concat(st.session_state.history, ignore_index=True)
+    full_history_df["Avg_Salary"] = full_history_df["Job_Title"].map(avg_salaries)
+
+    csv = convert_df_to_csv(full_history_df)
+    pdf = convert_df_to_pdf(full_history_df)
+
 
     def styled_download_button(content, filename, label):
         b64 = base64.b64encode(content).decode()
