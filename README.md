@@ -44,9 +44,8 @@ employee_salary_streamlit/
 
 ### 1. Clone the Repository
 
-```bash
 git clone https://github.com/Khushisoni702/employee-salary-predictor.git
-cd employee-salary-predictor
+cd employee-salary-predictor 
 
 ### 2. Create a Virtual Environment
 
@@ -56,6 +55,7 @@ source venv/bin/activate     # Windows: venv\Scripts\activate
 ### 3. Install Dependencies
 
 pip install -r requirements.txt
+
 ### 4. Run the App
 
 streamlit run app.py
@@ -67,3 +67,6 @@ You can deploy this app using Streamlit Cloud:
 -Sign in to Streamlit Cloud.
 -Link your repo and set app.py as the main file.
 -Deploy and share your app!
+
+## 👩‍💻 Author
+Khushi Soni
