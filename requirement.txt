@@ -1,0 +1,9 @@
+streamlit
+plotly
+fpdf
+pandas
+matplotlib
+pickle5
+
+
+
