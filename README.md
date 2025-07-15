@@ -30,13 +30,12 @@ This is a Machine Learning-based web application built with **Streamlit** that p
 
 employee_salary_streamlit/
 │
-├── app.py # Main Streamlit app
-├── model/
-│ └── salary_model.pkl # Trained ML model file
-├── model_training.ipynb # Jupyter notebook for training
-├── requirements.txt # Project dependencies
-├── README.md # Project documentation
-└── .gitignore # Files/folders to ignore in Git
+├── app.py                  # Main Streamlit app
+├── salary_model.pkl        # Trained ML model file (moved to root)
+├── model_training.ipynb    # Jupyter notebook for training
+├── requirements.txt        # Project dependencies
+├── README.md               # Project documentation
+└── .gitignore              # Git ignore rules
 
 ---
 
