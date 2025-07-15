@@ -69,3 +69,8 @@ You can deploy this app using Streamlit Cloud:
 
 ## 👩‍💻 Author
 Khushi Soni
+
+## 🔗 Live Demo
+🚀 Try the app live here:  
+👉 [Employee Salary Predictor](https://khushisoni702-employee-salary-predictor.streamlit.app/)
+
