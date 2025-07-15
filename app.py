@@ -4,9 +4,14 @@ import pickle
 import base64
 from fpdf import FPDF
 import plotly.express as px
+import os
+
+if not os.path.exists("salary_model.pkl"):
+    st.error("❌ salary_model.pkl not found! Make sure it's in the same folder as app.py.")
+    st.stop()
 
 # Load model
-with open("model/salary_model.pkl", "rb") as f:
+with open("salary_model.pkl", "rb") as f:
     model = pickle.load(f)
 
 # Streamlit Config
